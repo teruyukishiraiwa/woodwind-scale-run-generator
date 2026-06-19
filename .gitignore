@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.vite/
+
+*.log
+build_log*.txt
+tsc_output.txt
+icons-preview.png
+
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
+
+.vs/
+.vscode/
