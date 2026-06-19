@@ -8,6 +8,8 @@ Live app: https://woodwind-scale-run-generator.pages.dev/
 
 Website: https://teruyukishiraiwa.art/
 
+![Woodwind Scale Run Generator interface](docs/screenshot-beta-1-1.png)
+
 ## Features
 
 - Browser-only React + TypeScript + Vite application.
