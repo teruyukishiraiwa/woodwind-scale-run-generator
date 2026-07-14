@@ -2,7 +2,6 @@ export const PPQ = 960;
 
 export type SoundProfile = 'general-midi' | 'bbcso-pro' | 'custom';
 export type Direction = 'ascending' | 'descending' | 'up-down' | 'down-up';
-export type MotionFeel = 'strict' | 'natural';
 export type CurveType = 'linear' | 'ease-in' | 'ease-out' | 's-curve';
 export type PhraseLengthUnit = 'bars' | 'beats';
 export type NotationPitchMode = 'written' | 'concert';
@@ -56,13 +55,11 @@ export interface RunSettings {
   subdivision: number;
   tuplet: number;
   direction: Direction;
-  motionFeel: MotionFeel;
   startNote: number;
   endNote: number;
   lowestNote: number;
   highestNote: number;
   gatePercent: number;
-  seed: number;
   midiChannel: number;
   programChangeEnabled: boolean;
   programNumber: number;
@@ -102,7 +99,6 @@ export interface GeneratedPhrase {
     actualSpanSemitones: number;
     correctedStartNote: number;
     correctedEndNote: number;
-    seed: number;
   };
 }
 

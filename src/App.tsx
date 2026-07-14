@@ -15,12 +15,12 @@ import {
   Volume2,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_SETTINGS, PRESETS } from './core/defaults';
 import { generatePhrase } from './core/generator';
 import { downloadMidi } from './core/midi';
 import { getInstrument, gmProgramByteToProgramNumber, INSTRUMENTS, midiNoteName, NOTE_NAMES, SCALES } from './core/music';
-import { playPhrase, stopPreview } from './core/preview';
+import { playPhrase, preloadInstrument, stopPreview } from './core/preview';
 import { type EndpointSelection } from './core/score';
 import { PPQ, type CcLaneSettings, type CurveType, type DynamicContourMode, type DynamicCurveSettings, type GeneratedPhrase, type RunSettings } from './core/types';
 import { CreditsDialog } from './components/CreditsDialog';
@@ -48,6 +48,9 @@ import {
 
 const CURVE_IDS: CurveType[] = ['linear', 'ease-in', 'ease-out', 's-curve'];
 const PREVIEW_VOLUME_STORAGE_KEY = 'woodwind-preview-volume';
+const CUSTOM_PRESET_ID = 'custom';
+// Settings a preset writes; editing any of these means the result no longer matches the preset.
+const PRESET_KEYS = new Set<keyof RunSettings>(['soundProfile', 'gatePercent', 'velocity', 'ccLaneA', 'ccLaneB']);
 const INSTRUMENT_ICON_URLS: Record<string, string> = {
   piccolo: piccoloIconUrl,
   flute: fluteIconUrl,
@@ -123,6 +126,10 @@ export default function App() {
   const stopTimerRef = useRef<number | null>(null);
 
   const instrument = useMemo(() => getInstrument(settings.instrumentId), [settings.instrumentId]);
+
+  useEffect(() => {
+    preloadInstrument(settings.instrumentId);
+  }, [settings.instrumentId]);
   const generated = useMemo(() => {
     try {
       return { phrase: generatePhrase(settings), error: null as unknown };
@@ -136,7 +143,13 @@ export default function App() {
 
   function update<K extends keyof RunSettings>(key: K, value: RunSettings[K]) {
     setPreviewError(null);
-    setSettings((current) => ({ ...current, [key]: value }));
+    setSettings((current) => {
+      const next = { ...current, [key]: value };
+      if (PRESET_KEYS.has(key)) {
+        next.presetId = CUSTOM_PRESET_ID;
+      }
+      return next;
+    });
   }
 
   function changeLanguage(nextLanguage: Language) {
@@ -145,6 +158,7 @@ export default function App() {
   }
 
   function applyPreset(presetId: string) {
+    if (presetId === CUSTOM_PRESET_ID) return;
     const preset = PRESETS.find((item) => item.id === presetId) ?? PRESETS[0];
     setPreviewError(null);
     setSettings((current) => patchSettings({ ...current, presetId }, preset.patch));
@@ -207,12 +221,13 @@ export default function App() {
 
   return (
     <main className="app-shell" lang={language}>
+      <div className="stage" aria-hidden="true" />
       <header className="topbar">
         <div className="brand-lockup">
           <BrandIcon />
           <div>
-            <p className="eyebrow">{t(language, 'appEyebrow')}</p>
-            <h1>{t(language, 'appTitle')}</h1>
+            <p className="eyebrow">{t('en', 'appEyebrow')}</p>
+            <h1>{t('en', 'appTitle')}</h1>
           </div>
         </div>
         <div className="topbar-actions">
@@ -257,7 +272,7 @@ export default function App() {
         </div>
       </header>
 
-      {visibleError ? <div className="error-banner">{visibleError}</div> : null}
+      {visibleError ? <div className="error-banner" role="alert">{visibleError}</div> : null}
 
       <section className="workspace">
         <section className="panel settings-panel">
@@ -282,7 +297,15 @@ export default function App() {
               label={t(language, 'preset')}
               value={settings.presetId}
               onChange={applyPreset}
-              options={PRESETS.map((item) => ({ value: item.id, label: labelPreset(language, item.id) }))}
+              options={[
+                ...PRESETS.filter((item) => item.soundProfile === settings.soundProfile).map((item) => ({
+                  value: item.id,
+                  label: labelPreset(language, item.id),
+                })),
+                ...(settings.presetId === CUSTOM_PRESET_ID
+                  ? [{ value: CUSTOM_PRESET_ID, label: t(language, 'customPreset') }]
+                  : []),
+              ]}
             />
             <SelectField
               label={t(language, 'key')}

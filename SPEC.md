@@ -1,18 +1,18 @@
-# Woodwind Scale Run Generator β1.1 Specification
+# Woodwind Scale Run Generator v1.0 Specification
 
-This document describes the public β1.1 build of Woodwind Scale Run Generator. β1.1 is a practical browser-based production helper and remains open to further workflow, notation, and UI refinement before a future stable release.
+This document describes the v1.0 public release of Woodwind Scale Run Generator, a practical browser-based production helper for creating woodwind scale-run MIDI phrases.
 
 ## 1. Purpose and Non-Purpose
 
 ### Purpose
 
-v1.1 is a browser-only production helper for quickly generating woodwind run phrases as MIDI files for DAWs such as Logic Pro. It focuses on ascending, descending, and turn-around runs for orchestral woodwinds.
+v1.0 is a browser-only production helper for quickly generating woodwind run phrases as MIDI files for DAWs such as Logic Pro. It focuses on ascending, descending, and turn-around runs for orchestral woodwinds.
 
 The primary target sound library is Spitfire BBC Symphony Orchestra Professional, but the generation engine is sound-source independent. BBCSO behavior is represented as editable presets rather than hard-coded engine behavior.
 
 ### Non-Purpose
 
-v1.1 is not a full sequencer, notation editor, orchestration assistant, or BBCSO sound emulator. It does not attempt to reproduce BBCSO audio in the browser. It generates practical MIDI phrase material that can be imported into a DAW and assigned to the user's chosen instrument patch.
+v1.0 is not a full sequencer, notation editor, orchestration assistant, or BBCSO sound emulator. It does not attempt to reproduce BBCSO audio in the browser. It generates practical MIDI phrase material that can be imported into a DAW and assigned to the user's chosen instrument patch.
 
 ## 2. UI Parameters
 
@@ -20,7 +20,7 @@ The UI must expose at least the following parameters:
 
 - Instrument: Piccolo, Flute, Oboe, Clarinet, Bassoon, Contrabassoon.
 - Sound profile: General MIDI, BBCSO Pro, Custom.
-- Preset: neutral default, BBCSO Short Run, BBCSO Legato/Fast Run.
+- Preset: neutral default, BBCSO Short Run, BBCSO Legato/Fast Run. The Sound profile scopes which presets are listed, and manually editing a preset-controlled value marks the selection as Custom.
 - Key: chromatic root from C to B.
 - Mode / scale: Major, Natural Minor, Harmonic Minor, Melodic Minor, Dorian, Phrygian, Lydian, Mixolydian, Locrian, Chromatic.
 - Tempo in BPM.
@@ -37,7 +37,7 @@ The UI must expose at least the following parameters:
 - CC Lane B enabled/disabled, CC number, minimum, maximum, curve type.
 - CC density in points per beat, default 4, maximum 16.
 - UI display language: English or Japanese.
-- Release label: β1.1 / Beta 1.1.
+- Release label: v1.0.
 - Credits panel for creator attribution.
 - Preview volume, Play / Stop.
 - Export MIDI.
@@ -46,11 +46,11 @@ Tempo, phrase length, start note, and end note are controlled with slider plus n
 
 Pitch generation, preview, piano roll, and MIDI export use real-sounding MIDI note numbers. The score view can display either written pitch or concert pitch, with written pitch enabled by default.
 
-Language selection is UI-only in v1.1. It changes labels, buttons, option names, and user-facing errors, but it does not change generated MIDI data or engine settings.
+Language selection is UI-only in v1.0. It changes labels, buttons, option names, and user-facing errors, but it does not change generated MIDI data or engine settings.
 
 The main workflow is automatically synchronized: changing any valid setting regenerates the phrase used by notation, piano roll, preview, and MIDI export. Direction-aware dynamics use a Natural contour by default and can be inverted without changing the generated pitch path. Velocity, CC, Gate, channel, and Program Change remain available as advanced controls.
 
-In the automatic v1.1 workflow, subdivision and tuplet settings are retained for compatibility and score-rhythm utilities, but they do not determine the generated note count. The scale path itself determines the number of notes.
+In the automatic v1.0 workflow, subdivision and tuplet settings are retained for compatibility and score-rhythm utilities, but they do not determine the generated note count. The scale path itself determines the number of notes.
 
 The Credits panel is UI-only. It displays creator attribution for Teruyuki Shiraiwa and does not affect generation, preview, or MIDI export behavior.
 
@@ -134,7 +134,7 @@ Velocity and CC curves are direction-aware dynamics contours and do not depend o
 - Default CC density is 4 points per beat.
 - Maximum CC density is 16 points per beat.
 
-Legacy `base` and `peakPosition` fields remain in serialized settings for compatibility, but the beta 1.1 automatic workflow does not expose or use them for contour placement.
+Legacy `base` and `peakPosition` fields remain in serialized settings for compatibility, but the v1.0 automatic workflow does not expose or use them for contour placement.
 
 ## 7. BBCSO Pro Presets
 
@@ -182,16 +182,18 @@ MIDI export is Standard MIDI File Type 1.
 
 Note events are written using the selected MIDI channel after converting UI channel 1..16 to MIDI channel 0..15. Output notes are real MIDI pitch numbers.
 
-MIDI metadata such as Track Name, Instrument Name, and the default download filename remains stable English in v1.1, regardless of the selected UI language.
+MIDI metadata such as Track Name, Instrument Name, and the default download filename remains stable English in v1.0, regardless of the selected UI language.
 
 ## 9. Tone.js Preview Specification
 
 Preview playback uses Tone.js inside the browser.
 
 - Browser audio starts only in response to the user's Play action.
-- v1.1 preview does not emulate BBCSO tone.
+- v1.0 preview does not emulate BBCSO tone.
 - Preview is for checking pitch, rhythm, and approximate dynamics.
-- A simple synth is acceptable.
+- Preview plays real woodwind samples rendered from the FluidR3 GM soundfont (MIT, Frank Wen),
+  loaded per instrument with a Tone.js Sampler that pitch-shifts between sampled notes. Samples
+  are self-hosted under `public/samples/` so playback works offline within the app's CSP.
 - Velocity and active CC curves should be reflected in approximate playback loudness when possible.
 - Stop cancels scheduled playback and silences active notes.
 
@@ -206,7 +208,7 @@ The UI includes a VexFlow-based notation view in addition to the piano roll.
 - The score view has a Notation Pitch mode:
   - Written: default.
   - Concert: displays the real MIDI pitch.
-- Written display uses fixed v1.1 offsets:
+- Written display uses fixed v1.0 offsets:
   - Piccolo: -12 semitones.
   - Flute: 0.
   - Oboe: 0.
@@ -237,7 +239,7 @@ Vitest covers the generation core and MIDI writer:
 - Start/end based scale runs contain no repeated turn note and no range-edge bounce.
 - Direction/order errors are reported instead of silently swapping endpoints.
 - Scale-path based tick boundaries end exactly at the requested phrase length.
-- Subdivision and tuplet settings do not change the generated note count in the automatic v1.1 workflow.
+- Subdivision and tuplet settings do not change the generated note count in the automatic v1.0 workflow.
 - The full scale path is distributed across the selected length.
 - MIDI notes convert to VexFlow keys for notation rendering.
 - Written/concert notation pitch conversion uses the selected instrument's offset and does not change generated notes or MIDI output.
@@ -251,9 +253,9 @@ Vitest covers the generation core and MIDI writer:
 
 The final implementation must pass `npm run build`.
 
-## 12. Public β1.1 Deployment
+## 12. Public v1.0 Deployment
 
-The β1.1 public build is intended for GitHub and Cloudflare Pages.
+The v1.0 public release is intended for GitHub and Cloudflare Pages.
 
 - GitHub repository: `teruyukishiraiwa/woodwind-scale-run-generator`.
 - Build command: `npm run build`.
@@ -261,9 +263,9 @@ The β1.1 public build is intended for GitHub and Cloudflare Pages.
 - Cloudflare Pages framework preset: Vite.
 - Required Node.js version: 20 or newer.
 - Cloudflare Pages headers are provided through `public/_headers`, which Vite copies into `dist/_headers`.
-- Deployment metadata and UI release labeling use β1.1 / Beta 1.1, while MIDI file contents and MIDI metadata remain stable and do not include beta labeling.
+- Deployment metadata and UI release labeling use v1.0, while MIDI file contents and MIDI metadata remain stable and do not include release labeling.
 
-## 13. Features Excluded from β1.1
+## 13. Features Excluded from v1.0
 
 - Direct external MIDI sending through the Web MIDI API.
 - Drag-based per-note editing.

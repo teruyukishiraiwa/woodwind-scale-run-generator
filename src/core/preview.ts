@@ -1,25 +1,55 @@
 import * as Tone from 'tone';
+import { SAMPLE_NOTES } from './sampleManifest';
 import { PPQ, type GeneratedPhrase } from './types';
-
-let synth: Tone.PolySynth | null = null;
 
 interface PreviewOptions {
   volume?: number;
 }
 
-function ensureSynth(): Tone.PolySynth {
-  if (!synth) {
-    synth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'triangle' },
-      envelope: {
-        attack: 0.005,
-        decay: 0.08,
-        sustain: 0.45,
-        release: 0.12,
-      },
-    }).toDestination();
-  }
-  return synth;
+interface SamplerEntry {
+  sampler: Tone.Sampler;
+  loaded: Promise<void>;
+}
+
+const samplers = new Map<string, SamplerEntry>();
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function sampleBaseUrl(instrumentId: string): string {
+  const base = import.meta.env.BASE_URL ?? '/';
+  return `${base}samples/${instrumentId}/`;
+}
+
+function getSamplerEntry(instrumentId: string): SamplerEntry {
+  const existing = samplers.get(instrumentId);
+  if (existing) return existing;
+
+  const notes = SAMPLE_NOTES[instrumentId] ?? SAMPLE_NOTES.flute;
+  const urls = Object.fromEntries(notes.map((note) => [note, `${note}.mp3`]));
+
+  let markLoaded: () => void = () => {};
+  const loaded = new Promise<void>((resolve) => {
+    markLoaded = resolve;
+  });
+
+  const sampler = new Tone.Sampler({
+    urls,
+    baseUrl: sampleBaseUrl(instrumentId),
+    attack: 0.006,
+    release: 0.3,
+    onload: () => markLoaded(),
+  }).toDestination();
+
+  const entry: SamplerEntry = { sampler, loaded };
+  samplers.set(instrumentId, entry);
+  return entry;
+}
+
+/** Warm up an instrument's samples so the first Play has no load delay. */
+export function preloadInstrument(instrumentId: string): void {
+  getSamplerEntry(instrumentId);
 }
 
 function ccFactorAtTick(phrase: GeneratedPhrase, tick: number): number {
@@ -42,33 +72,39 @@ function ccFactorAtTick(phrase: GeneratedPhrase, tick: number): number {
 
 export async function playPhrase(phrase: GeneratedPhrase, options: PreviewOptions = {}): Promise<void> {
   await Tone.start();
-  const player = ensureSynth();
-  const previewVolume = Math.min(1, Math.max(0, options.volume ?? 0.8));
+  const entry = getSamplerEntry(phrase.settings.instrumentId);
+  await entry.loaded;
 
+  const previewVolume = clamp(options.volume ?? 0.8, 0, 1);
   stopPreview();
-  Tone.Transport.bpm.value = phrase.settings.tempo;
+
+  const transport = Tone.getTransport();
+  transport.bpm.value = phrase.settings.tempo;
 
   for (const note of phrase.notes) {
     const startSeconds = (note.startTick / PPQ) * (60 / phrase.settings.tempo);
-    const durationSeconds = Math.max(0.02, (note.durationTicks / PPQ) * (60 / phrase.settings.tempo));
-    const velocity = Math.min(1, Math.max(0.001, (note.velocity / 127) * ccFactorAtTick(phrase, note.startTick) * previewVolume));
-    const frequency = Tone.Frequency(note.pitch, 'midi').toFrequency();
+    const durationSeconds = Math.max(0.05, (note.durationTicks / PPQ) * (60 / phrase.settings.tempo));
+    const velocity = clamp((note.velocity / 127) * ccFactorAtTick(phrase, note.startTick) * previewVolume, 0.001, 1);
+    const frequency = Tone.Frequency(note.pitch, 'midi').toNote();
 
-    Tone.Transport.scheduleOnce((time) => {
-      player.triggerAttackRelease(frequency, durationSeconds, time, velocity);
+    transport.scheduleOnce((time) => {
+      entry.sampler.triggerAttackRelease(frequency, durationSeconds, time, velocity);
     }, startSeconds);
   }
 
-  const endSeconds = ((phrase.totalTicks + PPQ / 2) / PPQ) * (60 / phrase.settings.tempo);
-  Tone.Transport.scheduleOnce(() => {
+  const endSeconds = ((phrase.totalTicks + PPQ) / PPQ) * (60 / phrase.settings.tempo);
+  transport.scheduleOnce(() => {
     stopPreview();
   }, endSeconds);
 
-  Tone.Transport.start();
+  transport.start();
 }
 
 export function stopPreview(): void {
-  Tone.Transport.stop();
-  Tone.Transport.cancel(0);
-  synth?.releaseAll();
+  const transport = Tone.getTransport();
+  transport.stop();
+  transport.cancel(0);
+  for (const { sampler } of samplers.values()) {
+    sampler.releaseAll();
+  }
 }

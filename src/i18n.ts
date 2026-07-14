@@ -12,7 +12,7 @@ export const STORAGE_KEY = 'woodwind-run-language';
 const en = {
   appEyebrow: 'Scale run MIDI builder',
   appTitle: 'Woodwind Scale Run Generator',
-  releaseLabel: 'Beta 1.1',
+  releaseLabel: 'v1.0',
   play: 'Play',
   stop: 'Stop',
   exportMidi: 'Export MIDI',
@@ -84,6 +84,7 @@ const en = {
   generalMidi: 'General MIDI',
   bbcsoPro: 'BBCSO Pro',
   custom: 'Custom',
+  customPreset: 'Custom',
   ascending: 'Ascending',
   descending: 'Descending',
   upDown: 'Ascending to descending',
@@ -126,7 +127,7 @@ export type TranslationKey = keyof typeof en;
 const ja: Record<TranslationKey, string> = {
   appEyebrow: 'スケールランMIDI作成',
   appTitle: '木管スケールラン生成',
-  releaseLabel: 'β1.1',
+  releaseLabel: 'v1.0',
   play: '再生',
   stop: '停止',
   exportMidi: 'MIDI書き出し',
@@ -198,6 +199,7 @@ const ja: Record<TranslationKey, string> = {
   generalMidi: 'General MIDI',
   bbcsoPro: 'BBCSO Pro',
   custom: 'Custom',
+  customPreset: 'カスタム',
   ascending: '上行',
   descending: '下行',
   upDown: '上行から下行',

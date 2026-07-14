@@ -45,7 +45,7 @@ describe('generatePhrase', () => {
   });
 
   it('regenerates the same notes from the same settings', () => {
-    const input = settings({ seed: 2345, direction: 'up-down' });
+    const input = settings({ direction: 'up-down' });
     const first = generatePhrase(input);
     const second = generatePhrase(input);
 

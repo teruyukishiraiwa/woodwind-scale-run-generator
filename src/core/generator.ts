@@ -34,7 +34,6 @@ export function sanitizeSettings(settings: RunSettings): RunSettings {
     lowestNote: lowest,
     highestNote: highest,
     gatePercent: clamp(settings.gatePercent, 1, 150),
-    seed: Math.trunc(settings.seed) || 1,
     midiChannel: clampInt(settings.midiChannel, 1, 16),
     programNumber: clampInt(settings.programNumber, 1, 128),
     velocity: {
@@ -175,7 +174,6 @@ export function generatePhrase(input: RunSettings): GeneratedPhrase {
       actualSpanSemitones: Math.max(...pitches) - Math.min(...pitches),
       correctedStartNote: endpoints.startNote,
       correctedEndNote: endpoints.endNote,
-      seed: settings.seed,
     },
   };
 }

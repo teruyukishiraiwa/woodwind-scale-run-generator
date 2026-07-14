@@ -2,6 +2,9 @@ node_modules/
 dist/
 .vite/
 
+# Local sample-rendering toolchain (FluidSynth portable + soundfont, work files)
+tools/
+
 *.log
 build_log*.txt
 tsc_output.txt
